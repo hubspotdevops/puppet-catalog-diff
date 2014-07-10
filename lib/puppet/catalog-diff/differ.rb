@@ -39,8 +39,8 @@ module Puppet::CatalogDiff
           tmp = PSON.load(File.read(r))
         when '.json'
           tmp = PSON.load(File.read(r))
-	else 
-	  raise "Provide catalog with the approprtiate file extension, valid extensions are pson, yaml and marshal"
+        else
+          raise "Provide catalog with the approprtiate file extension, valid extensions are pson, yaml and marshal"
         end
 
         if @version == "0.24"
@@ -50,11 +50,19 @@ module Puppet::CatalogDiff
         end
       end
 
+      if options[:exclude_resources]
+        resources = options[:exclude_resources].split(";")
+        [to, from].each do |x|
+          x.reject! {|x| resources.include?(x[:title])}
+        end
+      end
+
+
       if options[:exclude_classes]
         [to, from].each do |x|
           x.reject! {|x| x[:type] == 'Class' }
         end
-      end 
+      end
 
       titles = {}
       titles[:to] = extract_titles(to)
