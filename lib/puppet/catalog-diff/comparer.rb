@@ -47,6 +47,7 @@ module Puppet::CatalogDiff
     # this will only print the resources available in both
     def compare_resources(old, new, options)
       puts "Individual Resource differences:"
+      diffs = false
 
       old.each do |resource|
         new_resource = new.find{|res| res[:resource_id] == resource[:resource_id]}
@@ -63,7 +64,10 @@ module Puppet::CatalogDiff
         sort_dependencies!(new_resource[:parameters])
         sort_dependencies!(resource[:parameters])
 
+        next if options[:ignore_resources] && options[:ignore_resources].include?(resource[:type] << '[' <<  resource[:title].to_s << ']')
+
         unless new_resource[:parameters] == resource[:parameters]
+          diffs = true
           if options[:show_resource_diff]
             puts
             puts "Resource diff: #{resource[:resource_id]}"
@@ -99,6 +103,7 @@ module Puppet::CatalogDiff
         end
 
       end
+      return diffs
     end
 
     # sort require/before/notify/subscribe before comparison
@@ -114,14 +119,18 @@ module Puppet::CatalogDiff
 
     # Takes arrays of resource titles and shows the differences
     def print_resource_diffs(r1, r2)
+      diffs = false
       puts "Only in old:"
-      (r2 - r1).each do |r|
+      (r2 - r1).sort.each do |r|
         puts "\t#{r}"
+        diffs = true
       end
       puts "Only in new:"
-      (r1 - r2).each do |r|
+      (r1 - r2).sort.each do |r|
         puts "\t#{r}"
+        diffs = true
       end
+      return diffs
     end
 
     def str_diff(str1, str2)
